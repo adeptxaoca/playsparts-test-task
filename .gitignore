@@ -18,4 +18,5 @@
 .idea
 .DS_Store
 go.sum
+config.yml
 bin/
