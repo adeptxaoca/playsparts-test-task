@@ -13,6 +13,11 @@ build: generate go-module
 run:
 	./bin/part_handler
 
+run-client: go-module
+	go mod download; \
+    go build -o ./bin/client ./cmd/client
+	./bin/client
+
 cover: go-module
 	go test -p 1 -coverprofile=cover.out `go list ./... | grep -v mock` && grep -v mock \
 	cover.out > coverage.out  &&  go tool cover -func=coverage.out
