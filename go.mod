@@ -3,6 +3,7 @@ module part_handler
 go 1.14
 
 require (
+	github.com/go-playground/validator/v10 v10.2.0
 	github.com/golang/protobuf v1.4.0
 	github.com/jackc/pgx/v4 v4.6.0
 	github.com/json-iterator/go v1.1.9

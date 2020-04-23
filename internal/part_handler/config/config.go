@@ -5,6 +5,8 @@ import (
 
 	jsoniter "github.com/json-iterator/go"
 	"github.com/spf13/viper"
+
+	"part_handler/internal/part_handler/validator"
 )
 
 // App configuration structure
@@ -12,6 +14,7 @@ type Config struct {
 	NetAddress string
 	ConnString string
 	Json       jsoniter.API
+	Validator  *validator.Validator
 }
 
 // Basic configuration of the application and related components
@@ -29,7 +32,8 @@ func AppConfiguration(configPath string) (*Config, error) {
 			viper.GetString("database.pass"),
 			viper.GetString("database.addr"),
 			viper.GetString("database.name")),
-		Json: jsoniter.ConfigCompatibleWithStandardLibrary,
+		Json:      jsoniter.ConfigCompatibleWithStandardLibrary,
+		Validator: validator.New(),
 	}
 
 	return &conf, nil
