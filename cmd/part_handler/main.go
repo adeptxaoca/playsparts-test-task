@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"flag"
+	"fmt"
 	"log"
 	"net"
 
@@ -26,13 +27,13 @@ func main() {
 		log.Fatal(err)
 	}
 
-	db, err := database.Connect(context.Background(), conf.ConnString)
+	db, err := database.Connect(context.Background(), conf)
 	if err != nil {
 		log.Fatalf("Unable to connect to database: %v\n", err)
 	}
 	defer func() { _ = db.Conn.Close(context.Background()) }()
 
-	lis, err := net.Listen("tcp", conf.NetAddress)
+	lis, err := net.Listen("tcp", fmt.Sprintf("localhost:%d", conf.Server.Port))
 	if err != nil {
 		log.Fatalf("failed to listen: %v", err)
 	}

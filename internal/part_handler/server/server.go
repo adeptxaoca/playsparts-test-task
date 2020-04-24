@@ -2,6 +2,7 @@ package server
 
 import (
 	"context"
+
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
@@ -11,36 +12,39 @@ import (
 )
 
 type partFunctions interface {
-	CreatePart(context.Context, *part.Part) (*part.Part, error)
+	CreatePart(context.Context, *part.Part) error
 	ReadPart(context.Context, uint64) (*part.Part, error)
+	UpdatePart(context.Context, *part.Part) (*part.Part, error)
+	DeletePart(context.Context, uint64) error
 }
 
 type validator interface {
-	Struct(s interface{}) error
+	Struct(interface{}) error
+	Errors(error)
 }
 
 type partServer struct {
-	db partFunctions
-	v  validator
+	db       partFunctions
+	validate validator
 
 	pb.UnimplementedPartServiceServer
 }
 
 func New(db partFunctions, conf *config.Config) *partServer {
-	return &partServer{db: db, v: conf.Validator.Validate}
+	return &partServer{db: db, validate: conf.Validator.Validate}
 }
 
 // Create a new abstract part
 func (s *partServer) Create(ctx context.Context, req *pb.CreateReq) (*pb.CreateRes, error) {
-	partIn := part.New(req.Part)
-	if err := s.v.Struct(partIn); err != nil {
+	p := part.New(req.Part)
+	if err := s.validate.Struct(p); err != nil {
+		s.validate.Errors(err)
 		return nil, status.Error(codes.InvalidArgument, "invalid request")
 	}
 
-	partOut, err := s.db.CreatePart(ctx, partIn)
-	if err != nil {
+	if err := s.db.CreatePart(ctx, p); err != nil {
 		return nil, err
 	}
 
-	return &pb.CreateRes{Part: partOut.Convert()}, nil
+	return &pb.CreateRes{Part: p.Convert()}, nil
 }
