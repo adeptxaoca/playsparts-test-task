@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"log"
+	"time"
 
 	"google.golang.org/grpc"
 
@@ -10,11 +11,23 @@ import (
 )
 
 func createPart(client pb.PartServiceClient, part *pb.Part) {
-	resp, err := client.Create(context.Background(), &pb.CreateReq{Part: part})
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+	resp, err := client.Create(ctx, &pb.CreateReq{Part: part})
 	if err != nil {
 		log.Fatalf("Could not create Part: %v", err)
 	}
 	log.Printf("A new Customer has been added with id: %v", resp.Part)
+}
+
+func readPart(client pb.PartServiceClient, id uint64) {
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+	res, err := client.Read(ctx, &pb.ReadReq{Id: id})
+	if err != nil {
+		log.Fatalf("Could not read Part[%d]: %v", id, err)
+	}
+	log.Println(res)
 }
 
 func main() {
@@ -22,9 +35,13 @@ func main() {
 	if err != nil {
 		log.Fatalf("did not connect: %v", err)
 	}
-	defer conn.Close()
+	defer func() { _ = conn.Close() }()
 
 	// Creates a new CustomerClient
 	client := pb.NewPartServiceClient(conn)
-	createPart(client, &pb.Part{})
+	// createPart(client, &pb.Part{})
+	readPart(client, 1)
+	readPart(client, 2)
+	readPart(client, 3)
+	readPart(client, 10)
 }

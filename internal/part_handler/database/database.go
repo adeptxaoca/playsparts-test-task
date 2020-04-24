@@ -3,58 +3,78 @@ package database
 import (
 	"context"
 	"fmt"
+	"log"
 
-	"github.com/jackc/pgx/v4"
+	"github.com/jackc/pgx/v4/pgxpool"
+	"github.com/jackc/tern/migrate"
 
 	"part_handler/internal/part_handler/config"
-	"part_handler/internal/part_handler/models/part"
 	"part_handler/pkg/errors"
 )
 
 type DB struct {
-	Conn *pgx.Conn
+	Pool *pgxpool.Pool
 }
 
-// Connect establishes a connection with a PostgreSQL server with a connection string
-func Connect(ctx context.Context, conf *config.Config) (*DB, error) {
-	connString := fmt.Sprintf("postgres://%s:%s@%s/%s", conf.Database.User, conf.Database.Pass,
-		conf.Database.Addr, conf.Database.Name)
-	conn, err := pgx.Connect(ctx, connString)
-	return &DB{Conn: conn}, err
+// Database configuration and connection creation
+func Setup(ctx context.Context, conf *config.Config) (*DB, error) {
+	db, err := connect(ctx, conf)
+	if err != nil {
+		return nil, errors.Wrap(err, "Unable to connect to database")
+	}
+
+	if err := db.migrateDatabase(context.Background()); err != nil {
+		return nil, errors.Wrap(err, "Unable to use migrations")
+	}
+
+	return db, nil
 }
 
-// Insert a new part in the table "parts"
-func (db *DB) CreatePart(ctx context.Context, p *part.Part) error {
-	err := db.Conn.QueryRow(ctx, "INSERT INTO parts (manufacturer_id, name, vendor_code) VALUES($1, $2, "+
-		"$3) RETURNING id, created_at", p.ManufacturerId, p.Name, p.VendorCode).Scan(&p.Id, &p.CreatedAt)
-	return err
+// Connect creates a new Pool and immediately establishes one connection
+func connect(ctx context.Context, conf *config.Config) (*DB, error) {
+	connString := fmt.Sprintf("postgres://%s:%s@%s/%s",
+		conf.Database.User, conf.Database.Pass, conf.Database.Addr, conf.Database.Name)
+	pool, err := pgxpool.Connect(ctx, connString)
+	return &DB{Pool: pool}, err
 }
 
-// Select a part by id
-func (db *DB) ReadPart(ctx context.Context, id uint64) (*part.Part, error) {
-	var p part.Part
-	err := db.Conn.QueryRow(ctx, "SELECT * FROM parts WHERE id = $1", id).
-		Scan(&p.Id, &p.ManufacturerId, &p.Name, &p.VendorCode, &p.CreatedAt, &p.UpdatedAt, &p.DeletedAt)
-	return &p, err
-}
-
-// Update a part by id
-func (db *DB) UpdatePart(ctx context.Context, p *part.Part) (*part.Part, error) {
-	err := db.Conn.QueryRow(ctx, "UPDATE parts SET manufacturer_id = $1, name = $2, vendor_code = $3 "+
-		"WHERE id = $4 RETURNING updated_at", p.ManufacturerId, p.Name, p.VendorCode, p.Id).Scan(&p.UpdatedAt)
-	return p, err
-}
-
-// Delete a part by id
-func (db *DB) DeletePart(ctx context.Context, id uint64) error {
-	ct, err := db.Conn.Exec(ctx, "DELETE FROM parts WHERE id = $1", id)
+// Run migrations to the database
+func (db *DB) migrateDatabase(ctx context.Context) error {
+	conn, err := db.acquire(ctx)
 	if err != nil {
 		return err
 	}
+	defer conn.Release()
 
-	if ct.RowsAffected() == 0 {
-		return errors.NotFound.Wrap(err, "part not found")
+	migrator, err := migrate.NewMigrator(ctx, conn.Conn(), "public.schema_version")
+	if err != nil {
+		return errors.InternalError.Wrap(err, "Unable to create a migrator")
 	}
 
+	err = migrator.LoadMigrations("./internal/part_handler/database/migrations/")
+	if err != nil {
+		return errors.InternalError.Wrap(err, "Unable to load migrations")
+	}
+
+	err = migrator.Migrate(ctx)
+	if err != nil {
+		return errors.InternalError.Wrap(err, "Unable to migrate")
+	}
+
+	ver, err := migrator.GetCurrentVersion(ctx)
+	if err != nil {
+		return errors.InternalError.Wrap(err, "Unable to get current schema version")
+	}
+
+	log.Printf("Migration done. Current schema version: %v\n", ver)
+
 	return nil
+}
+
+func (db *DB) acquire(ctx context.Context) (*pgxpool.Conn, error) {
+	conn, err := db.Pool.Acquire(ctx)
+	if err != nil {
+		return nil, errors.InternalError.Wrap(err, "Unable to acquire a database connection")
+	}
+	return conn, nil
 }

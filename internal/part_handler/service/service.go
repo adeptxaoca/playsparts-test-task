@@ -1,4 +1,4 @@
-package server
+package service
 
 import (
 	"context"
@@ -9,6 +9,7 @@ import (
 	"part_handler/internal/part_handler/config"
 	"part_handler/internal/part_handler/models/part"
 	pb "part_handler/pkg/api/v1"
+	"part_handler/pkg/errors"
 )
 
 type partFunctions interface {
@@ -20,7 +21,6 @@ type partFunctions interface {
 
 type validator interface {
 	Struct(interface{}) error
-	Errors(error)
 }
 
 type partServer struct {
@@ -38,7 +38,7 @@ func New(db partFunctions, conf *config.Config) *partServer {
 func (s *partServer) Create(ctx context.Context, req *pb.CreateReq) (*pb.CreateRes, error) {
 	p := part.New(req.Part)
 	if err := s.validate.Struct(p); err != nil {
-		s.validate.Errors(err)
+		errors.ValidateErrors(err)
 		return nil, status.Error(codes.InvalidArgument, "invalid request")
 	}
 
@@ -47,4 +47,14 @@ func (s *partServer) Create(ctx context.Context, req *pb.CreateReq) (*pb.CreateR
 	}
 
 	return &pb.CreateRes{Part: p.Convert()}, nil
+}
+
+// Read a new abstract part
+func (s *partServer) Read(ctx context.Context, req *pb.ReadReq) (*pb.ReadRes, error) {
+	p, err := s.db.ReadPart(ctx, req.Id)
+	if err != nil {
+		return nil, err
+	}
+
+	return &pb.ReadRes{Part: p.Convert()}, nil
 }

@@ -6,12 +6,14 @@ import (
 	"fmt"
 	"log"
 	"net"
+	"os"
+	"os/signal"
 
 	"google.golang.org/grpc"
 
 	"part_handler/internal/part_handler/config"
 	"part_handler/internal/part_handler/database"
-	"part_handler/internal/part_handler/server"
+	"part_handler/internal/part_handler/service"
 	pb "part_handler/pkg/api/v1"
 )
 
@@ -20,6 +22,7 @@ var (
 )
 
 func main() {
+	ctx := context.Background()
 	flag.Parse()
 
 	conf, err := config.AppConfiguration(*configPath)
@@ -27,19 +30,33 @@ func main() {
 		log.Fatal(err)
 	}
 
-	db, err := database.Connect(context.Background(), conf)
+	db, err := database.Setup(ctx, conf)
 	if err != nil {
-		log.Fatalf("Unable to connect to database: %v\n", err)
+		log.Fatalf("Unable to setup database: %v\n", err)
 	}
-	defer func() { _ = db.Conn.Close(context.Background()) }()
+	defer db.Pool.Close()
 
 	lis, err := net.Listen("tcp", fmt.Sprintf("localhost:%d", conf.Server.Port))
 	if err != nil {
 		log.Fatalf("failed to listen: %v", err)
 	}
 
+	// Register service
 	grpcServer := grpc.NewServer()
-	pb.RegisterPartServiceServer(grpcServer, server.New(db, conf))
+	pb.RegisterPartServiceServer(grpcServer, service.New(db, conf))
+
+	// Graceful shutdown
+	c := make(chan os.Signal, 1)
+	signal.Notify(c, os.Interrupt)
+	go func() {
+		for range c {
+			log.Println("shutting down gRPC server...")
+			grpcServer.GracefulStop()
+			<-ctx.Done()
+		}
+	}()
+
+	// Start gRPC server
 	if err := grpcServer.Serve(lis); err != nil {
 		log.Fatalf("failed to serve: %v", err)
 	}
