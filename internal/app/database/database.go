@@ -8,8 +8,8 @@ import (
 	"github.com/jackc/pgx/v4/pgxpool"
 	"github.com/jackc/tern/migrate"
 
-	"part_handler/internal/part_handler/config"
-	"part_handler/pkg/errors"
+	"part_handler/internal/app/config"
+	"part_handler/internal/pkg/errors"
 )
 
 type DB struct {
@@ -51,7 +51,7 @@ func (db *DB) migrateDatabase(ctx context.Context) error {
 		return errors.InternalError.Wrap(err, "Unable to create a migrator")
 	}
 
-	err = migrator.LoadMigrations("./internal/part_handler/database/migrations/")
+	err = migrator.LoadMigrations("./internal/app/database/migrations/")
 	if err != nil {
 		return errors.InternalError.Wrap(err, "Unable to load migrations")
 	}

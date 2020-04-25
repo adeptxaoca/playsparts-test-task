@@ -4,7 +4,6 @@ package parthandler;
 
 service PartService {
   rpc Create(CreateReq) returns (CreateRes) {}
-  rpc CreateMultiple(stream CreateReq) returns (stream CreateRes) {}
   rpc Read(ReadReq) returns (ReadRes) {}
   rpc Update(UpdateReq) returns (UpdateRes) {}
   rpc Delete(DeleteReq) returns (DeleteRes) {}

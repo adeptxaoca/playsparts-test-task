@@ -4,7 +4,7 @@ import (
 	jsoniter "github.com/json-iterator/go"
 	"github.com/spf13/viper"
 
-	"part_handler/internal/part_handler/validator"
+	"part_handler/internal/pkg/validator"
 )
 
 type ServerConf struct {

@@ -7,7 +7,7 @@ import (
 
 	"google.golang.org/grpc"
 
-	pb "part_handler/pkg/api/v1"
+	pb "part_handler/internal/pkg/api/v1"
 )
 
 func createPart(client pb.PartServiceClient, part *pb.Part) {
@@ -15,7 +15,7 @@ func createPart(client pb.PartServiceClient, part *pb.Part) {
 	defer cancel()
 	resp, err := client.Create(ctx, &pb.CreateReq{Part: part})
 	if err != nil {
-		log.Fatalf("Could not create Part: %v", err)
+		log.Fatalf("Create Part: %v", err)
 	}
 	log.Printf("A new Customer has been added with id: %v", resp.Part)
 }
@@ -25,7 +25,7 @@ func readPart(client pb.PartServiceClient, id uint64) {
 	defer cancel()
 	res, err := client.Read(ctx, &pb.ReadReq{Id: id})
 	if err != nil {
-		log.Fatalf("Could not read Part[%d]: %v", id, err)
+		log.Fatalf("Read Part[%d]: %v", id, err)
 	}
 	log.Println(res)
 }
@@ -39,7 +39,8 @@ func main() {
 
 	// Creates a new CustomerClient
 	client := pb.NewPartServiceClient(conn)
-	// createPart(client, &pb.Part{})
+
+	// Test queries
 	readPart(client, 1)
 	readPart(client, 2)
 	readPart(client, 3)

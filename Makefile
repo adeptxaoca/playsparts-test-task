@@ -4,7 +4,7 @@ go-module:
 	export GO111MODULE=$(GO111MODULE);
 
 generate:
-	protoc -I=./api/proto/v1 --go_out=plugins=grpc:pkg/api/v1 part_handler.proto
+	protoc -I=./api/proto/v1 --go_out=plugins=grpc:internal/pkg/api/v1 part_handler.proto
 
 build: generate go-module
 	go mod download; \
