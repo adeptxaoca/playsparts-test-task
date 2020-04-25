@@ -32,7 +32,7 @@ type service struct {
 
 // NewService creates Parts service
 func NewService(db partFunctions, conf *config.Config) *service {
-	return &service{db: db, validate: conf.Validator.Validate}
+	return &service{db: db, validate: conf.Validator}
 }
 
 // Create a new abstract part
@@ -43,13 +43,12 @@ func (s *service) Create(ctx context.Context, req *pb.CreateReq) (*pb.CreateRes,
 		VendorCode:     req.Part.VendorCode,
 	}
 	if err := s.validate.Struct(in); err != nil {
-		errors.ValidateErrors(err)
-		return nil, status.Error(codes.InvalidArgument, "invalid request")
+		return nil, err
 	}
 
 	out, err := s.db.CreatePart(ctx, &in)
 	if err != nil {
-		return nil, err
+		return nil, errors.GrpcError(err)
 	}
 
 	return &pb.CreateRes{Part: out.ToPb()}, nil
@@ -57,9 +56,13 @@ func (s *service) Create(ctx context.Context, req *pb.CreateReq) (*pb.CreateRes,
 
 // Read a abstract part
 func (s *service) Read(ctx context.Context, req *pb.ReadReq) (*pb.ReadRes, error) {
+	if req.Id == 0 {
+		return nil, status.Error(codes.InvalidArgument, "id must be more 0")
+	}
+
 	out, err := s.db.ReadPart(ctx, req.Id)
 	if err != nil {
-		return nil, err
+		return nil, errors.GrpcError(err)
 	}
 
 	return &pb.ReadRes{Part: out.ToPb()}, nil
@@ -74,13 +77,12 @@ func (s *service) Update(ctx context.Context, req *pb.UpdateReq) (*pb.UpdateRes,
 		VendorCode:     req.Part.VendorCode,
 	}
 	if err := s.validate.Struct(in); err != nil {
-		errors.ValidateErrors(err)
-		return nil, status.Error(codes.InvalidArgument, "invalid request")
+		return nil, err
 	}
 
 	out, err := s.db.UpdatePart(ctx, &in)
 	if err != nil {
-		return nil, err
+		return nil, errors.GrpcError(err)
 	}
 
 	return &pb.UpdateRes{Part: out.ToPb()}, nil
@@ -88,9 +90,13 @@ func (s *service) Update(ctx context.Context, req *pb.UpdateReq) (*pb.UpdateRes,
 
 // Delete a abstract part
 func (s *service) Delete(ctx context.Context, req *pb.DeleteReq) (*pb.DeleteRes, error) {
+	if req.Id == 0 {
+		return nil, status.Error(codes.InvalidArgument, "id must be more 0")
+	}
+
 	err := s.db.DeletePart(ctx, req.Id)
 	if err != nil {
-		return nil, err
+		return nil, errors.GrpcError(err)
 	}
 
 	return &pb.DeleteRes{Success: true}, nil

@@ -5,23 +5,20 @@ package errors
 
 import (
 	"fmt"
-	"github.com/go-playground/validator/v10"
 
 	gErrors "github.com/pkg/errors"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 )
 
 type ErrorType uint
 
 const (
-	BadRequest ErrorType = iota
-	DatabaseError
+	IntegrityRestrictionError ErrorType = iota
 	InternalError
-	FailedDependency
-	ModelError
+	DatabaseError
 	NotFound
 	ValidationError
-	Unauthorized
-	Expired
 )
 
 type Error struct {
@@ -119,27 +116,22 @@ func GetErrorContext(err error) map[string]string {
 	return nil
 }
 
-// TODO: Validate errors handler
-func ValidateErrors(err error) {
-	// this check is only needed when your code could produce
-	// an invalid value for validation such as interface with nil
-	// value most including myself do not usually have code like this.
-	if _, ok := err.(*validator.InvalidValidationError); ok {
-		fmt.Println(err)
-		return
-	}
+// Return grpc error
+func GrpcError(err error) error {
+	eType := GetType(err)
+	code := grpcCode(eType)
+	return status.Error(code, err.Error())
+}
 
-	for _, err := range err.(validator.ValidationErrors) {
-		fmt.Println(err.Namespace())
-		fmt.Println(err.Field())
-		fmt.Println(err.StructNamespace())
-		fmt.Println(err.StructField())
-		fmt.Println(err.Tag())
-		fmt.Println(err.ActualTag())
-		fmt.Println(err.Kind())
-		fmt.Println(err.Type())
-		fmt.Println(err.Value())
-		fmt.Println(err.Param())
-		fmt.Println()
+func grpcCode(eType ErrorType) codes.Code {
+	switch eType {
+	case ValidationError, IntegrityRestrictionError:
+		return codes.InvalidArgument
+	case DatabaseError, InternalError:
+		return codes.Internal
+	case NotFound:
+		return codes.NotFound
+	default:
+		return codes.Unknown
 	}
 }

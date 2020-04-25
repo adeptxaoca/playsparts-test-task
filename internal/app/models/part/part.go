@@ -58,17 +58,12 @@ func Create(ctx context.Context, conn *pgxpool.Conn, in *Part) (*Part, error) {
 // Select a part by id
 func Read(ctx context.Context, conn *pgxpool.Conn, id uint64) (*Part, error) {
 	out := Part{Id: id}
-
 	err := conn.QueryRow(ctx, `
 		SELECT manufacturer_id, name, vendor_code, created_at, updated_at, deleted_at
 		FROM parts
 		WHERE id = $1
 	`, out.Id).
 		Scan(&out.ManufacturerId, &out.Name, &out.VendorCode, &out.CreatedAt, &out.UpdatedAt, &out.DeletedAt)
-	if err != nil {
-		return nil, errors.DatabaseError.Wrap(err, "read part")
-	}
-
 	return &out, err
 }
 

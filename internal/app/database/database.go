@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"log"
 
+	"github.com/jackc/pgconn"
+	"github.com/jackc/pgx/v4"
 	"github.com/jackc/pgx/v4/pgxpool"
 	"github.com/jackc/tern/migrate"
 
@@ -51,7 +53,7 @@ func (db *DB) migrateDatabase(ctx context.Context) error {
 		return errors.InternalError.Wrap(err, "Unable to create a migrator")
 	}
 
-	err = migrator.LoadMigrations("./internal/app/database/migrations/")
+	err = migrator.LoadMigrations("./internal/app/migrations/")
 	if err != nil {
 		return errors.InternalError.Wrap(err, "Unable to load migrations")
 	}
@@ -77,4 +79,39 @@ func (db *DB) acquire(ctx context.Context) (*pgxpool.Conn, error) {
 		return nil, errors.InternalError.Wrap(err, "Unable to acquire a database connection")
 	}
 	return conn, nil
+}
+
+func pgError(err error) error {
+	if err == nil {
+		return nil
+	}
+
+	origErr := errors.Cause(err)
+	if origErr == pgx.ErrNoRows {
+		return errors.NotFound.New("record was not found")
+	}
+
+	// perhaps best use pgErr.ConstraintName
+	if pgErr, ok := origErr.(*pgconn.PgError); ok {
+		switch pgErr.Code {
+		case "23000":
+			return errors.IntegrityRestrictionError.Newf("integrity constraint violation (%s)", pgErr.Detail)
+		case "23001":
+			return errors.IntegrityRestrictionError.Newf("restrict violation (%s)", pgErr.Detail)
+		case "23502":
+			return errors.IntegrityRestrictionError.Newf("not null violation (%s)", pgErr.Detail)
+		case "23503":
+			return errors.IntegrityRestrictionError.Newf("foreign key violation (%s)", pgErr.Detail)
+		case "23505":
+			return errors.IntegrityRestrictionError.Newf("unique violation (%s)", pgErr.Detail)
+		case "23514":
+			return errors.IntegrityRestrictionError.Newf("check violation (%s)", pgErr.Detail)
+		case "23P01":
+			return errors.IntegrityRestrictionError.Newf("exclusion violation (%s)", pgErr.Detail)
+		default:
+			return errors.DatabaseError.Wrap(err, "database error")
+		}
+	}
+
+	return errors.InternalError.Wrap(err, "undefined pg error")
 }
