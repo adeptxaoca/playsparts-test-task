@@ -1,31 +1,27 @@
 package main
 
 import (
+	"context"
 	"flag"
-	"fmt"
 	"log"
-	"net"
 
-	"google.golang.org/grpc"
-
-	"part_handler/internal/part_handler/server"
-	pb "part_handler/pkg/api/v1"
+	"part_handler/internal/app/config"
+	"part_handler/internal/pkg/server"
 )
 
 var (
-	port = flag.Int("port", 10000, "The server port")
+	configPath = flag.String("config", "configs", "config file path")
 )
 
 func main() {
 	flag.Parse()
-	lis, err := net.Listen("tcp", fmt.Sprintf("localhost:%d", *port))
+
+	conf, err := config.AppConfiguration(*configPath)
 	if err != nil {
-		log.Fatalf("failed to listen: %v", err)
+		log.Fatal(err)
 	}
 
-	grpcServer := grpc.NewServer()
-	pb.RegisterPartServiceServer(grpcServer, server.New())
-	if err := grpcServer.Serve(lis); err != nil {
-		log.Fatalf("failed to serve: %v", err)
+	if err := server.Run(context.Background(), conf); err != nil {
+		log.Fatal(err)
 	}
 }

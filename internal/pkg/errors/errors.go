@@ -7,20 +7,18 @@ import (
 	"fmt"
 
 	gErrors "github.com/pkg/errors"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 )
 
 type ErrorType uint
 
 const (
-	BadRequest ErrorType = iota
-	DatabaseError
+	IntegrityRestrictionError ErrorType = iota
 	InternalError
-	FailedDependency
-	ModelError
+	DatabaseError
 	NotFound
 	ValidationError
-	Unauthorized
-	Expired
 )
 
 type Error struct {
@@ -116,4 +114,24 @@ func GetErrorContext(err error) map[string]string {
 	}
 
 	return nil
+}
+
+// Return grpc error
+func GrpcError(err error) error {
+	eType := GetType(err)
+	code := grpcCode(eType)
+	return status.Error(code, err.Error())
+}
+
+func grpcCode(eType ErrorType) codes.Code {
+	switch eType {
+	case ValidationError, IntegrityRestrictionError:
+		return codes.InvalidArgument
+	case DatabaseError, InternalError:
+		return codes.Internal
+	case NotFound:
+		return codes.NotFound
+	default:
+		return codes.Unknown
+	}
 }
