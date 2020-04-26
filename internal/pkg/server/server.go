@@ -3,11 +3,14 @@ package server
 import (
 	"context"
 	"fmt"
-	"log"
 	"net"
 	"os"
 	"os/signal"
 
+	grpc_middleware "github.com/grpc-ecosystem/go-grpc-middleware"
+	grpc_zap "github.com/grpc-ecosystem/go-grpc-middleware/logging/zap"
+	grpc_ctxtags "github.com/grpc-ecosystem/go-grpc-middleware/tags"
+	"go.uber.org/zap"
 	"google.golang.org/grpc"
 
 	"part_handler/internal/app/config"
@@ -18,13 +21,15 @@ import (
 )
 
 // Run gRPC service to publish Parts service
-func Run(ctx context.Context, conf *config.Config) error {
+func Run(ctx context.Context, log *zap.Logger, conf *config.Config) error {
 	// Connection setup and database connection
-	db, err := database.Setup(ctx, conf)
+	db, ver, err := database.Setup(ctx, conf)
 	if err != nil {
 		return errors.Wrap(err, "Unable to setup database")
 	}
 	defer db.Pool.Close()
+
+	log.Info("Migration done. Current schema version", zap.Int32("version", ver))
 
 	// Listen announces on the local network address.
 	lis, err := net.Listen("tcp", fmt.Sprintf("localhost:%d", conf.Server.Port))
@@ -33,7 +38,15 @@ func Run(ctx context.Context, conf *config.Config) error {
 	}
 
 	// Register service
-	grpcServer := grpc.NewServer()
+	grpc_zap.ReplaceGrpcLoggerV2(log)
+	grpcServer := grpc.NewServer(
+		grpc_middleware.WithUnaryServerChain(
+			grpc_ctxtags.UnaryServerInterceptor(
+				grpc_ctxtags.WithFieldExtractor(grpc_ctxtags.CodeGenRequestFieldExtractor),
+			),
+			grpc_zap.UnaryServerInterceptor(log),
+		),
+	)
 	pb.RegisterPartServiceServer(grpcServer, v1.NewService(db, conf))
 
 	// Graceful shutdown
@@ -41,7 +54,7 @@ func Run(ctx context.Context, conf *config.Config) error {
 	signal.Notify(c, os.Interrupt)
 	go func() {
 		for range c {
-			log.Println("shutting down gRPC server...")
+			log.Info("shutting down gRPC server...")
 			grpcServer.GracefulStop()
 			<-ctx.Done()
 		}
