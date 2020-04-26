@@ -98,9 +98,9 @@ func Update(ctx context.Context, conn *pgxpool.Conn, in *Part) (*Part, error) {
 // Delete a part by id
 func Delete(ctx context.Context, conn *pgxpool.Conn, id uint64) error {
 	_, err := conn.Exec(ctx, `
-		DELETE FROM parts
+		UPDATE parts SET deleted_at = $2
 		WHERE id = $1 AND deleted_at IS NULL;
-	`, id)
+	`, id, time.Now())
 
 	return err
 }

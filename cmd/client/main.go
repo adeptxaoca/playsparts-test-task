@@ -80,8 +80,9 @@ func main() {
 	updatePart(client, &pb.Part{Id: 100, Name: "first#", VendorCode: "8QQA$OXJ#ZBV"})
 	updatePart(client, &pb.Part{Id: 8, Name: "simple name", VendorCode: "3000BGF"})
 
-	p := createPart(client, &pb.Part{ManufacturerId: 5, Name: "engine 3000", VendorCode: "QWERTY1234567"})
+	p := createPart(client, &pb.Part{ManufacturerId: 5, Name: "engine 3000", VendorCode: "QWERTY"})
 	readPart(client, p.Part.Id)
 	updatePart(client, &pb.Part{Id: p.Part.Id, Name: "engine 4000"})
 	deletePart(client, p.Part.Id)
+	updatePart(client, &pb.Part{Id: p.Part.Id, Name: "engine 5000"})
 }
