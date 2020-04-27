@@ -23,7 +23,7 @@ import (
 // Run gRPC service to publish Parts service
 func Run(ctx context.Context, log *zap.Logger, conf *config.Config) error {
 	// Connection setup and database connection
-	db, ver, err := database.Setup(ctx, conf)
+	db, ver, err := database.Setup(ctx, &conf.Database)
 	if err != nil {
 		return errors.Wrap(err, "Unable to setup database")
 	}

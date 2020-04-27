@@ -16,6 +16,8 @@ type DatabaseConf struct {
 	Pass string
 	Addr string
 	Name string
+
+	MaxConns int32
 }
 
 // App configuration structure
@@ -37,10 +39,11 @@ func AppConfiguration(configPath string) (*Config, error) {
 	conf := Config{
 		Server: ServerConf{Port: viper.GetUint("server.port")},
 		Database: DatabaseConf{
-			User: viper.GetString("database.user"),
-			Pass: viper.GetString("database.pass"),
-			Addr: viper.GetString("database.addr"),
-			Name: viper.GetString("database.name"),
+			User:     viper.GetString("database.user"),
+			Pass:     viper.GetString("database.pass"),
+			Addr:     viper.GetString("database.addr"),
+			Name:     viper.GetString("database.name"),
+			MaxConns: viper.GetInt32("database.max_conns"),
 		},
 		Json:      jsoniter.ConfigCompatibleWithStandardLibrary,
 		Validator: validator.New(),

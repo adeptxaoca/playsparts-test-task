@@ -18,7 +18,7 @@ type DB struct {
 }
 
 // Database configuration and connection creation
-func Setup(ctx context.Context, conf *config.Config) (*DB, int32, error) {
+func Setup(ctx context.Context, conf *config.DatabaseConf) (*DB, int32, error) {
 	db, err := connect(ctx, conf)
 	if err != nil {
 		return nil, 0, errors.Wrap(err, "Unable to connect to database")
@@ -33,9 +33,14 @@ func Setup(ctx context.Context, conf *config.Config) (*DB, int32, error) {
 }
 
 // Connect creates a new Pool and immediately establishes one connection
-func connect(ctx context.Context, conf *config.Config) (*DB, error) {
-	connString := fmt.Sprintf("postgres://%s:%s@%s/%s",
-		conf.Database.User, conf.Database.Pass, conf.Database.Addr, conf.Database.Name)
+func connect(ctx context.Context, conf *config.DatabaseConf) (*DB, error) {
+	connString := fmt.Sprintf("postgres://%s:%s@%s/%s", conf.User, conf.Pass, conf.Addr, conf.Name)
+	pgxConf, err := pgxpool.ParseConfig(connString)
+	if err != nil {
+		return nil, err
+	}
+	pgxConf.MaxConns = conf.MaxConns
+
 	pool, err := pgxpool.Connect(ctx, connString)
 	return &DB{Pool: pool}, err
 }

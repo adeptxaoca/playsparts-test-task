@@ -5,6 +5,9 @@ database:
   user: user_name
   pass: user_password
 
+  # max_conns is the maximum size of the pool.
+  max_conns: 25
+
 # Server configuration
 server:
   port: 8080
