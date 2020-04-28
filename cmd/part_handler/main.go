@@ -12,8 +12,7 @@ import (
 )
 
 var (
-	configPath = flag.String("config", "configs", "config file path")
-	port       = flag.Uint("port", 3000, "grpc server port")
+	port = flag.Uint("port", 3000, "grpc server port")
 )
 
 func main() {
@@ -22,7 +21,7 @@ func main() {
 	log, _ := zap.NewProduction()
 	defer func() { _ = log.Sync() }()
 
-	conf, err := config.AppConfiguration(*configPath)
+	conf, err := config.AppConfiguration()
 	if err != nil {
 		log.Fatal(err.Error())
 		os.Exit(1)

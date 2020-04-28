@@ -12,4 +12,4 @@ services:
       - ${APP_PORT}:3000
     depends_on:
       - postgres
-    command: ["./deployments/scripts/wait-for-it.sh", "postgres:5432", "--", "./bin/part_handler", "--port=3000"]
+    command: ["./deployments/scripts/wait-for-it.sh", "${DATABASE_ADDR}", "--", "./bin/part_handler", "--port=3000"]
