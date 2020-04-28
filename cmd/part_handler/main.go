@@ -8,7 +8,7 @@ import (
 	"go.uber.org/zap"
 
 	"part_handler/internal/app/config"
-	"part_handler/internal/pkg/server"
+	"part_handler/internal/app/server"
 )
 
 var (
