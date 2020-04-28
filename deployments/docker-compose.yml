@@ -1,0 +1,21 @@
+version: "3.8"
+services:
+  postgres:
+    image: postgres:12.2
+    env_file: ../.env
+    environment:
+      PGDATA: /data/postgres
+    volumes:
+      - ./scripts/postgres:/docker-entrypoint-initdb.d
+      - postgres:/data/postgres
+  server:
+    build: ../
+    env_file: ../.env
+    ports:
+      - ${APP_PORT}:3000
+    depends_on:
+      - postgres
+    command: ["./deployments/scripts/wait-for-it.sh", "${DATABASE_ADDR}", "--", "./bin/part_handler", "--port=3000"]
+
+volumes:
+  postgres:

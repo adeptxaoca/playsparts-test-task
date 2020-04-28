@@ -9,19 +9,21 @@ import (
 	"github.com/jackc/pgx/pgtype"
 	"github.com/jackc/pgx/v4/pgxpool"
 
+	"part_handler/internal/app/models/manufacturer"
 	pb "part_handler/internal/pkg/api/v1"
 	"part_handler/internal/pkg/errors"
 	"part_handler/internal/pkg/utils"
 )
 
 type Part struct {
-	Id             uint64             `json:"id"`
-	ManufacturerId uint64             `json:"manufacturer_id"`
-	Name           string             `json:"name" validate:"omitempty,gt=0,lt=255,name"`
-	VendorCode     string             `json:"vendor_code" validate:"omitempty,gt=0,lte=100,vendor-code"`
-	CreatedAt      pgtype.Timestamptz `json:"created_at"`
-	UpdatedAt      pgtype.Timestamptz `json:"updated_at"`
-	DeletedAt      pgtype.Timestamptz `json:"deleted_at"`
+	Id             uint64                     `json:"id"`
+	ManufacturerId uint64                     `json:"manufacturer_id"`
+	Manufacturer   *manufacturer.Manufacturer `json:"-"`
+	Name           string                     `json:"name" validate:"omitempty,gt=0,lt=255,name"`
+	VendorCode     string                     `json:"vendor_code" validate:"omitempty,gt=0,lte=100,vendor-code"`
+	CreatedAt      pgtype.Timestamptz         `json:"created_at"`
+	UpdatedAt      pgtype.Timestamptz         `json:"updated_at"`
+	DeletedAt      pgtype.Timestamptz         `json:"deleted_at"`
 }
 
 // Convert data to proto format

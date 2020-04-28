@@ -2,7 +2,6 @@ package database
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/jackc/pgconn"
 	"github.com/jackc/pgx/v4"
@@ -34,14 +33,13 @@ func Setup(ctx context.Context, conf *config.DatabaseConf) (*DB, int32, error) {
 
 // Connect creates a new Pool and immediately establishes one connection
 func connect(ctx context.Context, conf *config.DatabaseConf) (*DB, error) {
-	connString := fmt.Sprintf("postgres://%s:%s@%s/%s", conf.User, conf.Pass, conf.Addr, conf.Name)
-	pgxConf, err := pgxpool.ParseConfig(connString)
+	pgxConf, err := pgxpool.ParseConfig(conf.Url)
 	if err != nil {
 		return nil, err
 	}
 	pgxConf.MaxConns = conf.MaxConns
 
-	pool, err := pgxpool.Connect(ctx, connString)
+	pool, err := pgxpool.ConnectConfig(ctx, pgxConf)
 	return &DB{Pool: pool}, err
 }
 

@@ -16,8 +16,10 @@
 
 # Other
 .idea
+.env
 .DS_Store
 go.sum
 config.yml
 bin/
 logs/
+tmp/

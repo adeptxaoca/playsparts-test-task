@@ -6,6 +6,7 @@ import (
 	"net"
 	"os"
 	"os/signal"
+	"syscall"
 
 	grpc_middleware "github.com/grpc-ecosystem/go-grpc-middleware"
 	grpc_zap "github.com/grpc-ecosystem/go-grpc-middleware/logging/zap"
@@ -21,7 +22,7 @@ import (
 )
 
 // Run gRPC service to publish Parts service
-func Run(ctx context.Context, log *zap.Logger, conf *config.Config) error {
+func Run(ctx context.Context, port uint, log *zap.Logger, conf *config.Config) error {
 	// Connection setup and database connection
 	db, ver, err := database.Setup(ctx, &conf.Database)
 	if err != nil {
@@ -32,7 +33,7 @@ func Run(ctx context.Context, log *zap.Logger, conf *config.Config) error {
 	log.Info("Migration done. Current schema version", zap.Int32("version", ver))
 
 	// Listen announces on the local network address.
-	lis, err := net.Listen("tcp", fmt.Sprintf("localhost:%d", conf.Server.Port))
+	lis, err := net.Listen("tcp", fmt.Sprintf(":%d", port))
 	if err != nil {
 		return errors.Wrap(err, "Failed to listen")
 	}
@@ -50,14 +51,14 @@ func Run(ctx context.Context, log *zap.Logger, conf *config.Config) error {
 	pb.RegisterPartServiceServer(grpcServer, v1.NewService(db, conf))
 
 	// Graceful shutdown
-	c := make(chan os.Signal, 1)
-	signal.Notify(c, os.Interrupt)
+	quit := make(chan os.Signal, 1)
+	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
+
 	go func() {
-		for range c {
-			log.Info("shutting down gRPC server...")
-			grpcServer.GracefulStop()
-			<-ctx.Done()
-		}
+		<-quit
+		log.Info("shutting down gRPC server...")
+		grpcServer.GracefulStop()
+		<-ctx.Done()
 	}()
 
 	// Start gRPC server

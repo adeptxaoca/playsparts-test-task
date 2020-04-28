@@ -61,7 +61,7 @@ func deletePart(client pb.PartServiceClient, id uint64) *pb.DeleteRes {
 }
 
 func main() {
-	conn, err := grpc.Dial("localhost:10000", grpc.WithInsecure())
+	conn, err := grpc.Dial("127.0.0.1:10000", grpc.WithInsecure())
 	if err != nil {
 		log.Fatalf("did not connect: %v", err)
 	}
@@ -81,6 +81,10 @@ func main() {
 	updatePart(client, &pb.Part{Id: 8, Name: "simple name", VendorCode: "3000BGF"})
 
 	p := createPart(client, &pb.Part{ManufacturerId: 5, Name: "engine 3000", VendorCode: "QWERTY"})
+	if p == nil {
+		return
+	}
+
 	readPart(client, p.Part.Id)
 	updatePart(client, &pb.Part{Id: p.Part.Id, Name: "engine 4000"})
 	deletePart(client, p.Part.Id)

@@ -5,29 +5,29 @@ import (
 	"flag"
 	"os"
 
+	"go.uber.org/zap"
+
 	"part_handler/internal/app/config"
-	"part_handler/internal/pkg/logger"
-	"part_handler/internal/pkg/server"
+	"part_handler/internal/app/server"
 )
 
 var (
-	configPath = flag.String("config", "configs", "config file path")
-	logPath    = flag.String("log", "logs/parts.log", "log file path")
+	port = flag.Uint("port", 3000, "grpc server port")
 )
 
 func main() {
 	flag.Parse()
 
-	log := logger.InitLogger(*logPath)
+	log, _ := zap.NewProduction()
 	defer func() { _ = log.Sync() }()
 
-	conf, err := config.AppConfiguration(*configPath)
+	conf, err := config.AppConfiguration()
 	if err != nil {
 		log.Fatal(err.Error())
 		os.Exit(1)
 	}
 
-	if err := server.Run(context.Background(), log, conf); err != nil {
+	if err := server.Run(context.Background(), *port, log, conf); err != nil {
 		log.Fatal(err.Error())
 		os.Exit(1)
 	}
