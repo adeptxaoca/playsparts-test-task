@@ -7,10 +7,6 @@ import (
 	"part_handler/internal/pkg/validator"
 )
 
-type ServerConf struct {
-	Port uint
-}
-
 type DatabaseConf struct {
 	User string
 	Pass string
@@ -22,7 +18,6 @@ type DatabaseConf struct {
 
 // App configuration structure
 type Config struct {
-	Server    ServerConf
 	Database  DatabaseConf
 	Json      jsoniter.API
 	Validator *validator.Validator
@@ -37,7 +32,6 @@ func AppConfiguration(configPath string) (*Config, error) {
 	}
 
 	conf := Config{
-		Server: ServerConf{Port: viper.GetUint("server.port")},
 		Database: DatabaseConf{
 			User:     viper.GetString("database.user"),
 			Pass:     viper.GetString("database.pass"),

@@ -6,12 +6,21 @@ go-module:
 generate:
 	protoc -I=./api/proto/v1 --go_out=plugins=grpc:internal/pkg/api/v1 part_handler.proto
 
-build: generate go-module
+build: go-module
 	go mod download; \
 	go build -o ./bin/part_handler ./cmd/part_handler
 
-run:
-	./bin/part_handler
+deploy-build:
+	docker-compose -f ./deployments/docker-compose.yml build
+
+deploy-up:
+	docker-compose -f ./deployments/docker-compose.yml up
+
+deploy-stop:
+	docker-compose -f ./deployments/docker-compose.yml stop
+
+deploy-down:
+	docker-compose -f ./deployments/docker-compose.yml down
 
 run-client: go-module
 	go mod download; \
