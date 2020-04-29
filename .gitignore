@@ -13,3 +13,15 @@
 
 # Dependency directories (remove the comment below to include it)
 # vendor/
+
+# Other
+.idea
+.env
+.DS_Store
+go.sum
+config.yml
+bin/
+logs/
+tmp/
+cover.out
+coverage.out

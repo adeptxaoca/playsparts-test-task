@@ -1,0 +1,52 @@
+syntax = "proto3";
+
+package parthandler;
+
+service PartService {
+  rpc Create(CreateReq) returns (CreateRes) {}
+  rpc Read(ReadReq) returns (ReadRes) {}
+  rpc Update(UpdateReq) returns (UpdateRes) {}
+  rpc Delete(DeleteReq) returns (DeleteRes) {}
+}
+
+message Part {
+  uint64 id = 1;
+  uint64 manufacturer_id = 2;
+  string name = 3;
+  string vendor_code = 4;
+  int64 created_at = 5;
+  int64 updated_at = 6;
+  int64 deleted_at = 7;
+}
+
+message CreateReq {
+  Part part = 1;
+}
+
+message CreateRes {
+  Part part = 1;
+}
+
+message ReadReq {
+  uint64 id = 1;
+}
+
+message ReadRes {
+  Part part = 1;
+}
+
+message UpdateReq {
+  Part part = 1;
+}
+
+message UpdateRes {
+  Part part = 1;
+}
+
+message DeleteReq {
+  uint64 id = 1;
+}
+
+message DeleteRes {
+  bool success = 1;
+}
