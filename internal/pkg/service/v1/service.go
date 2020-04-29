@@ -3,9 +3,6 @@ package v1
 import (
 	"context"
 
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
-
 	"part_handler/internal/app/config"
 	"part_handler/internal/app/models/part"
 	pb "part_handler/internal/pkg/api/v1"
@@ -57,7 +54,7 @@ func (s *service) Create(ctx context.Context, req *pb.CreateReq) (*pb.CreateRes,
 // Read a abstract part
 func (s *service) Read(ctx context.Context, req *pb.ReadReq) (*pb.ReadRes, error) {
 	if req.Id == 0 {
-		return nil, status.Error(codes.InvalidArgument, "id must be more 0")
+		return nil, errors.GrpcError(errors.ValidationError.New("id must be more 0"))
 	}
 
 	out, err := s.db.ReadPart(ctx, req.Id)
@@ -91,7 +88,7 @@ func (s *service) Update(ctx context.Context, req *pb.UpdateReq) (*pb.UpdateRes,
 // Delete a abstract part
 func (s *service) Delete(ctx context.Context, req *pb.DeleteReq) (*pb.DeleteRes, error) {
 	if req.Id == 0 {
-		return nil, status.Error(codes.InvalidArgument, "id must be more 0")
+		return nil, errors.GrpcError(errors.ValidationError.New("id must be more 0"))
 	}
 
 	err := s.db.DeletePart(ctx, req.Id)

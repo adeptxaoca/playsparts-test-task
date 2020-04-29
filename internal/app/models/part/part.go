@@ -7,14 +7,15 @@ import (
 	"time"
 
 	"github.com/jackc/pgx/pgtype"
-	"github.com/jackc/pgx/v4/pgxpool"
 
+	"part_handler/internal/app/database/interfaces"
 	"part_handler/internal/app/models/manufacturer"
 	pb "part_handler/internal/pkg/api/v1"
 	"part_handler/internal/pkg/errors"
 	"part_handler/internal/pkg/utils"
 )
 
+// Representation of the "parts" table object as a structure
 type Part struct {
 	Id             uint64                     `json:"id"`
 	ManufacturerId uint64                     `json:"manufacturer_id"`
@@ -51,7 +52,7 @@ func (p *Part) ToPb() *pb.Part {
 }
 
 // Insert a new part in the table
-func Create(ctx context.Context, conn *pgxpool.Conn, in *Part) (*Part, error) {
+func Create(ctx context.Context, conn interfaces.Conn, in *Part) (*Part, error) {
 	out := Part{ManufacturerId: in.ManufacturerId, Name: in.Name, VendorCode: in.VendorCode}
 
 	err := conn.QueryRow(ctx, `
@@ -65,7 +66,7 @@ func Create(ctx context.Context, conn *pgxpool.Conn, in *Part) (*Part, error) {
 }
 
 // Select a part by id
-func Read(ctx context.Context, conn *pgxpool.Conn, id uint64) (*Part, error) {
+func Read(ctx context.Context, conn interfaces.Conn, id uint64) (*Part, error) {
 	out := Part{Id: id}
 
 	err := conn.QueryRow(ctx, `
@@ -79,7 +80,7 @@ func Read(ctx context.Context, conn *pgxpool.Conn, id uint64) (*Part, error) {
 }
 
 // Update a part by id
-func Update(ctx context.Context, conn *pgxpool.Conn, in *Part) (*Part, error) {
+func Update(ctx context.Context, conn interfaces.Conn, in *Part) (*Part, error) {
 	out := Part{Id: in.Id}
 
 	set := updatePrepare(in)
@@ -98,7 +99,7 @@ func Update(ctx context.Context, conn *pgxpool.Conn, in *Part) (*Part, error) {
 }
 
 // Delete a part by id
-func Delete(ctx context.Context, conn *pgxpool.Conn, id uint64) error {
+func Delete(ctx context.Context, conn interfaces.Conn, id uint64) error {
 	_, err := conn.Exec(ctx, `
 		UPDATE parts SET deleted_at = $2
 		WHERE id = $1 AND deleted_at IS NULL;
