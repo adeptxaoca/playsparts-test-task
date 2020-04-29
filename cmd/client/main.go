@@ -2,6 +2,8 @@ package main
 
 import (
 	"context"
+	"fmt"
+	"github.com/spf13/viper"
 	"log"
 	"time"
 
@@ -61,7 +63,12 @@ func deletePart(client pb.PartServiceClient, id uint64) *pb.DeleteRes {
 }
 
 func main() {
-	conn, err := grpc.Dial("127.0.0.1:10000", grpc.WithInsecure())
+	viper.SetConfigFile(".env")
+	if err := viper.ReadInConfig(); err != nil {
+		log.Fatalf("invalid config file: %v", err)
+	}
+
+	conn, err := grpc.Dial(fmt.Sprintf("127.0.0.1:%s", viper.Get("APP_PORT")), grpc.WithInsecure())
 	if err != nil {
 		log.Fatalf("did not connect: %v", err)
 	}
