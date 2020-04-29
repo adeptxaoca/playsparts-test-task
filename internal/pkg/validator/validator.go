@@ -5,8 +5,8 @@ import (
 	"strings"
 
 	"github.com/go-playground/validator/v10"
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
+
+	"part_handler/internal/pkg/errors"
 )
 
 var (
@@ -35,7 +35,7 @@ func (v *Validator) Struct(s interface{}) error {
 			fields = append(fields, err.Namespace())
 		}
 
-		return status.Error(codes.InvalidArgument, strings.Join(fields, ","))
+		return errors.ValidationError.New(strings.Join(fields, ","))
 	}
 	return nil
 }

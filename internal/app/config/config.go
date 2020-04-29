@@ -7,6 +7,7 @@ import (
 	"part_handler/internal/pkg/validator"
 )
 
+// Database config
 type DatabaseConf struct {
 	User string
 	Pass string
@@ -25,8 +26,21 @@ type Config struct {
 }
 
 // Basic configuration of the application and related components
-func AppConfiguration() (*Config, error) {
-	viper.SetConfigFile(".env")
+func AppConfiguration(file string) (*Config, error) {
+	conf, err := parseConfig(file)
+	if err != nil {
+		return nil, err
+	}
+
+	conf.Json = jsoniter.ConfigCompatibleWithStandardLibrary
+	conf.Validator = validator.New()
+
+	return conf, nil
+}
+
+// ParseConfig will discover and load the configuration file from disk
+func parseConfig(file string) (*Config, error) {
+	viper.SetConfigFile(file)
 	if err := viper.ReadInConfig(); err != nil {
 		return nil, err
 	}
@@ -40,8 +54,6 @@ func AppConfiguration() (*Config, error) {
 			Url:      viper.GetString("DATABASE_URL"),
 			MaxConns: viper.GetInt32("DATABASE_MAX_CONNS"),
 		},
-		Json:      jsoniter.ConfigCompatibleWithStandardLibrary,
-		Validator: validator.New(),
 	}
 
 	return &conf, nil

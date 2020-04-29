@@ -21,7 +21,7 @@ func main() {
 	log, _ := zap.NewProduction()
 	defer func() { _ = log.Sync() }()
 
-	conf, err := config.AppConfiguration()
+	conf, err := config.AppConfiguration(".env")
 	if err != nil {
 		log.Fatal(err.Error())
 		os.Exit(1)
