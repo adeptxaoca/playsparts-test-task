@@ -23,3 +23,5 @@ config.yml
 bin/
 logs/
 tmp/
+cover.out
+coverage.out
