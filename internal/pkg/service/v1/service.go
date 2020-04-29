@@ -42,8 +42,8 @@ func (s *service) Create(ctx context.Context, req *pb.CreateReq) (*pb.CreateRes,
 		Name:           req.Part.Name,
 		VendorCode:     req.Part.VendorCode,
 	}
-	if err := s.validate.Struct(in); err != nil {
-		return nil, err
+	if err := s.validate.Struct(&in); err != nil {
+		return nil, errors.GrpcError(err)
 	}
 
 	out, err := s.db.CreatePart(ctx, &in)
@@ -76,8 +76,8 @@ func (s *service) Update(ctx context.Context, req *pb.UpdateReq) (*pb.UpdateRes,
 		Name:           req.Part.Name,
 		VendorCode:     req.Part.VendorCode,
 	}
-	if err := s.validate.Struct(in); err != nil {
-		return nil, err
+	if err := s.validate.Struct(&in); err != nil {
+		return nil, errors.GrpcError(err)
 	}
 
 	out, err := s.db.UpdatePart(ctx, &in)
