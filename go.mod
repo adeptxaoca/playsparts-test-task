@@ -3,9 +3,7 @@ module part_handler
 go 1.14
 
 require (
-	github.com/DATA-DOG/go-sqlmock v1.4.1
 	github.com/go-playground/validator/v10 v10.2.0
-	github.com/go-testfixtures/testfixtures/v3 v3.1.2
 	github.com/golang/protobuf v1.4.0
 	github.com/grpc-ecosystem/go-grpc-middleware v1.2.0
 	github.com/jackc/fake v0.0.0-20150926172116-812a484cc733 // indirect
@@ -20,5 +18,4 @@ require (
 	github.com/stretchr/testify v1.5.1
 	go.uber.org/zap v1.15.0
 	google.golang.org/grpc v1.29.1
-	gopkg.in/yaml.v2 v2.2.8 // indirect
 )
